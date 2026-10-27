@@ -1,0 +1,20 @@
+
+# Dependencies
+node_modules/
+
+# Next.js build files
+.next/
+
+# Firebase local cache
+.firebase/
+
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Firebase project configuration
+.firebaserc
+
+# Local Firebase config
+lib/firebase/config.js
