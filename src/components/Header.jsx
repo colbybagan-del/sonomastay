@@ -44,11 +44,22 @@ export default function Header({ initialUser }) {
     signInWithGoogle();
   };
 
+  const handleAddSampleHotels = async (event) => {
+    event.preventDefault();
+
+    try {
+      await addFakeRestaurantsAndReviews();
+      window.location.reload();
+    } catch (error) {
+      console.error("Error adding sample hotels:", error);
+      alert("Could not add sample hotels. Check the browser console for details.");
+    }
+  };
+
   return (
     <header>
       <Link href="/" className="logo">
-        <img src="/friendly-eats.svg" alt="FriendlyEats" />
-        Friendly Eats
+        SonomaStay
       </Link>
 
       {user ? (
@@ -57,7 +68,7 @@ export default function Header({ initialUser }) {
             <img
               className="profileImage"
               src={user.photoURL || "/profile.svg"}
-              alt={user.email}
+              alt=""
             />
             {user.displayName}
           </p>
@@ -67,8 +78,8 @@ export default function Header({ initialUser }) {
               <li>{user.displayName}</li>
 
               <li>
-                <a href="#" onClick={addFakeRestaurantsAndReviews}>
-                  Add sample restaurants
+                <a href="#" onClick={handleAddSampleHotels}>
+                  Add Sample Hotels
                 </a>
               </li>
 
@@ -83,7 +94,7 @@ export default function Header({ initialUser }) {
       ) : (
         <div className="profile">
           <a href="#" onClick={handleSignIn}>
-            <img src="/profile.svg" alt="A placeholder user image" />
+            <img src="/profile.svg" alt="" />
             Sign In with Google
           </a>
         </div>
