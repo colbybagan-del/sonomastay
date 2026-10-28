@@ -1,11 +1,11 @@
-// The filters shown on the restaurant listings page
+// Filters for the SonomaStay hotel listings page
 
 import Tag from "@/src/components/Tag.jsx";
 
 function FilterSelect({ label, options, value, onChange, name, icon }) {
   return (
     <div>
-      <img src={icon} alt={label} />
+      <img src={icon} alt="" />
       <label>
         {label}
         <select value={value} onChange={onChange} name={name}>
@@ -36,9 +36,9 @@ export default function Filters({ filters, setFilters }) {
     <section className="filter">
       <details className="filter-menu">
         <summary>
-          <img src="/filter.svg" alt="filter" />
+          <img src="/filter.svg" alt="" />
           <div>
-            <p>Restaurants</p>
+            <p>Stays</p>
             <p>Sorted by {filters.sort || "Rating"}</p>
           </div>
         </summary>
@@ -47,26 +47,21 @@ export default function Filters({ filters, setFilters }) {
           method="GET"
           onSubmit={(event) => {
             event.preventDefault();
-            event.target.parentNode.removeAttribute("open");
+            event.currentTarget.closest("details")?.removeAttribute("open");
           }}
         >
           <FilterSelect
-            label="Category"
+            label="Stay type"
             options={[
               "",
-              "Italian",
-              "Chinese",
-              "Japanese",
-              "Mexican",
-              "Indian",
-              "Mediterranean",
-              "Caribbean",
-              "Cajun",
-              "German",
-              "Russian",
-              "Cuban",
-              "Organic",
-              "Tapas",
+              "Boutique Hotel",
+              "Wine Country Inn",
+              "Bed & Breakfast",
+              "Luxury Resort",
+              "Country Lodge",
+              "Guesthouse",
+              "Spa & Wellness",
+              "Riverside Retreat",
             ]}
             value={filters.category}
             onChange={(event) => handleSelectionChange(event, "category")}
@@ -75,20 +70,19 @@ export default function Filters({ filters, setFilters }) {
           />
 
           <FilterSelect
-            label="City"
+            label="Location"
             options={[
               "",
-              "New York",
-              "Los Angeles",
-              "London",
-              "Paris",
-              "Tokyo",
-              "Mumbai",
-              "Dubai",
-              "Amsterdam",
-              "Seoul",
-              "Singapore",
-              "Istanbul",
+              "Sonoma",
+              "Healdsburg",
+              "Santa Rosa",
+              "Glen Ellen",
+              "Kenwood",
+              "Sebastopol",
+              "Petaluma",
+              "Guerneville",
+              "Windsor",
+              "Forestville",
             ]}
             value={filters.city}
             onChange={(event) => handleSelectionChange(event, "city")}
@@ -97,7 +91,7 @@ export default function Filters({ filters, setFilters }) {
           />
 
           <FilterSelect
-            label="Price"
+            label="Nightly price"
             options={["", "$", "$$", "$$$", "$$$$"]}
             value={filters.price}
             onChange={(event) => handleSelectionChange(event, "price")}
@@ -106,9 +100,9 @@ export default function Filters({ filters, setFilters }) {
           />
 
           <FilterSelect
-            label="Sort"
+            label="Sort by"
             options={["Rating", "Review"]}
-            value={filters.sort}
+            value={filters.sort || "Rating"}
             onChange={(event) => handleSelectionChange(event, "sort")}
             name="sort"
             icon="/sortBy.svg"
@@ -130,8 +124,9 @@ export default function Filters({ filters, setFilters }) {
               >
                 Reset
               </button>
+
               <button type="submit" className="button--confirm">
-                Submit
+                Apply filters
               </button>
             </menu>
           </footer>
@@ -140,15 +135,13 @@ export default function Filters({ filters, setFilters }) {
 
       <div className="tags">
         {Object.entries(filters).map(([type, value]) => {
-          // The main filter bar already specifies what
-          // sorting is being used. So skip showing the
-          // sorting as a 'tag'
-          if (type == "sort" || value == "") {
+          if (type === "sort" || value === "") {
             return null;
           }
+
           return (
             <Tag
-              key={value}
+              key={type}
               type={type}
               value={value}
               updateField={updateField}

@@ -1,83 +1,98 @@
-// Import the Google AI plugin that allows Genkit to communicate with Gemini.
+// Import the Google Gemini plugin for Genkit.
 import { googleAI } from "@genkit-ai/google-genai";
-// Import Genkit, which provides the AI generation functionality.
+
+// Import Genkit's AI generation function.
 import { genkit } from "genkit";
-// Import the function that retrieves reviews for a specific restaurant from Firestore.
+
+// Import the function that retrieves guest reviews from Firestore.
 import { getReviewsByRestaurantId } from "@/src/lib/firebase/firestore.js";
-// Import the function that initializes the authenticated Firebase application for the current user.
+
+// Import Firebase authentication for server-side access.
 import { getAuthenticatedAppForUser } from "@/src/lib/firebase/serverApp";
-// Import getFirestore, which provides access to the Firestore database.
+
+// Import Firestore's database accessor.
 import { getFirestore } from "firebase/firestore";
 
-// Define an asynchronous component that generates a summary of a restaurant's reviews.
+// Create a Genkit instance configured with Google's Gemini plugin.
+const ai = genkit({
+  plugins: [googleAI()],
+});
+
+// Generate an AI summary of a hotel's guest reviews.
 export async function GeminiSummary({ restaurantId }) {
-  // Retrieve the authenticated Firebase application for the current user.
-  const { firebaseServerApp } = await getAuthenticatedAppForUser();
-
-  // Connect to Firestore and retrieve the reviews belonging to this restaurant.
-  const reviews = await getReviewsByRestaurantId(
-    getFirestore(firebaseServerApp), // Get the Firestore database instance.
-    restaurantId // Specify which restaurant's reviews to retrieve.
-  );
-
-  // Define a character that separates individual reviews in the AI prompt.
-  const reviewSeparator = "@";
-
-  // Create a prompt instructing Gemini to summarize the restaurant's reviews.
-  const prompt = `
-    Based on the following restaurant reviews, 
-    where each review is separated by a '${reviewSeparator}' character, 
-    create a one-sentence summary of what people think of the restaurant. 
-
-    Here are the reviews: ${reviews.map((review) => review.text).join(reviewSeparator)}
-  `;
-
-  // Use try/catch to handle errors that might occur during AI generation.
   try {
-    // Check whether the Gemini API key is available in the server environment.
+    // Make sure the Gemini API key is configured on the server.
     if (!process.env.GEMINI_API_KEY) {
-      // Explain that the required environment variable must be configured.
-      // The linked documentation explains how to configure Genkit.
-      throw new Error(
-        'GEMINI_API_KEY not set. Set it with "firebase apphosting:secrets:set GEMINI_API_KEY"'
+      throw new Error("GEMINI_API_KEY is not configured.");
+    }
+
+    // Get the Firebase app authenticated for the current user.
+    const { firebaseServerApp } = await getAuthenticatedAppForUser();
+
+    // Retrieve the hotel's reviews from Firestore.
+    const reviews = await getReviewsByRestaurantId(
+      getFirestore(firebaseServerApp),
+      restaurantId
+    );
+
+    // Show a helpful message when there are no reviews to summarize.
+    if (!reviews || reviews.length === 0) {
+      return (
+        <div className="restaurant__review_summary">
+          <p>There are no guest reviews to summarize yet.</p>
+        </div>
       );
     }
 
-    // Configure Genkit to use Google's Gemini AI plugin and the selected model.
-    const ai = genkit({
-      // Register the Google AI plugin so Genkit can access Gemini models.
-      plugins: [googleAI()],
-      // Set the Gemini model used to generate the summary.
-      model: googleAI.model("gemini-3.8-flash"),
+    // Combine the review text into one prompt for Gemini.
+    const reviewText = reviews
+      .map((review) => review.text)
+      .filter((text) => typeof text === "string" && text.trim().length > 0)
+      .join("\n");
+
+    // Avoid sending an empty prompt to Gemini.
+    if (!reviewText.trim()) {
+      return (
+        <div className="restaurant__review_summary">
+          <p>There are no guest reviews to summarize yet.</p>
+        </div>
+      );
+    }
+
+    // Ask Gemini to summarize the main themes in one sentence.
+    const response = await ai.generate({
+      model: googleAI.model("gemini-flash-latest"),
+      prompt: `Summarize the following hotel guest reviews in one clear, neutral sentence. Describe recurring opinions about the property, and do not invent details that the reviews do not mention.
+
+Guest reviews:
+${reviewText}`,
     });
 
-    // Send the review prompt to Gemini and retrieve the generated text.
-    const { text } = await ai.generate(prompt);
-
-    // Display the generated summary and identify it as AI-generated.
+    // Display the generated summary.
     return (
       <div className="restaurant__review_summary">
-        {/* Display Gemini's summary of the restaurant reviews. */}
-        <p>{text}</p>
-        {/* Tell users that Gemini generated the summary. */}
+        <p>{response.text}</p>
         <p>✨ Summarized with Gemini</p>
       </div>
     );
-  } catch (e) {
-    // Print error details to the server logs to help with troubleshooting.
-    console.error(e);
+  } catch (error) {
+    // Log the detailed error so it can be investigated in the server logs.
+    console.error("Error summarizing guest reviews:", error);
 
-    // Display a fallback message if the summary cannot be generated.
-    return <p>Error summarizing reviews.</p>;
+    // Display a user-friendly message instead of crashing the page.
+    return (
+      <div className="restaurant__review_summary">
+        <p>Unable to summarize guest reviews right now.</p>
+      </div>
+    );
   }
 }
 
-// Define a loading component that appears while the review summary is being generated.
+// Display a placeholder while the summary is being generated.
 export function GeminiSummarySkeleton() {
-  // Display a message letting users know that Gemini is processing the reviews.
   return (
     <div className="restaurant__review_summary">
-      <p>✨ Summarizing reviews with Gemini...</p>
+      <p>✨ Summarizing guest reviews with Gemini...</p>
     </div>
   );
 }
