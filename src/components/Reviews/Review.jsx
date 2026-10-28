@@ -1,16 +1,25 @@
 import renderStars from "@/src/components/Stars.jsx";
 
 export function Review({ rating, text, timestamp }) {
+  const reviewDate = timestamp
+    ? new Date(timestamp)
+    : null;
+
+  const validDate =
+    reviewDate && !isNaN(reviewDate.getTime());
+
   return (
     <li className="review__item">
       <ul className="restaurant__rating">{renderStars(rating)}</ul>
       <p>{text}</p>
 
-      <time>
-        {new Intl.DateTimeFormat("en-GB", {
-          dateStyle: "medium",
-        }).format(timestamp)}
-      </time>
+      {validDate && (
+        <time dateTime={reviewDate.toISOString()}>
+          {new Intl.DateTimeFormat("en-GB", {
+            dateStyle: "medium",
+          }).format(reviewDate)}
+        </time>
+      )}
     </li>
   );
 }
